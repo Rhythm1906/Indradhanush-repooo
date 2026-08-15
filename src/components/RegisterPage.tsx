@@ -109,9 +109,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
   return (
     <div className="min-h-screen bg-[#1242c7] text-white flex flex-col justify-between p-4 sm:p-8 select-none relative overflow-hidden">
-      {/* Top Bar with SINUSOID VX Logo on top left (matching screenshot 1) */}
-      <div className="w-full max-w-7xl mx-auto flex items-center justify-between z-10">
-        <SinusoidLogo size="md" />
+      {/* Top Bar with SINUSOID VX Logo on top left corner */}
+      <div className="absolute top-4 left-4 z-10">
+        <SinusoidLogo size="sm" />
       </div>
 
       {/* Main Registration Box (Exact match to Screenshot 1) */}

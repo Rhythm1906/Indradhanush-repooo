@@ -101,9 +101,9 @@ export const RedeemPage: React.FC<RedeemPageProps> = ({
 
   return (
     <div className="min-h-screen bg-[#1242c7] text-white flex flex-col justify-between p-4 sm:p-8 select-none relative overflow-hidden">
-      {/* Top Header matching all screenshots */}
-      <div className="w-full max-w-7xl mx-auto flex items-center justify-between z-10">
-        <SinusoidLogo size="md" onClick={handleReset} />
+      {/* Top Header with Logo in corner */}
+      <div className="absolute top-4 left-4 z-10">
+        <SinusoidLogo size="sm" onClick={handleReset} />
       </div>
 
       {/* Main Content Area */}
