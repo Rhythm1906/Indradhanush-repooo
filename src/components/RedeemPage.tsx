@@ -5,7 +5,7 @@ import { CertificatePreview } from './CertificatePreview';
 import { findRecordByName, markRecordRedeemed } from '../utils/storage';
 import { downloadCertificatePDF } from '../utils/pdfGenerator';
 import { DonationRecord, CertificateTemplate } from '../types';
-import { ArrowLeft, Download, RotateCcw, AlertCircle, CheckCircle2, Share2, Sparkles } from 'lucide-react';
+import { Download, AlertCircle } from 'lucide-react';
 
 interface RedeemPageProps {
   initialNameQuery?: string;
@@ -26,14 +26,13 @@ export const RedeemPage: React.FC<RedeemPageProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Auto-verify if prefilled from QR code scan
   useEffect(() => {
     if (initialNameQuery && initialNameQuery.trim()) {
       handleVerify(initialNameQuery);
     }
   }, [initialNameQuery]);
 
-  const handleVerify = (nameToSearch: string) => {
+  const handleVerify = async (nameToSearch: string) => {
     const query = nameToSearch.trim();
     setErrorMessage('');
     if (!query) {
@@ -44,13 +43,12 @@ export const RedeemPage: React.FC<RedeemPageProps> = ({
     setIsVerifying(true);
     setHasSearched(true);
 
-    setTimeout(() => {
-      const match = findRecordByName(query);
+    try {
+      const match = await findRecordByName(query);
       if (match) {
         setVerifiedRecord(match);
         markRecordRedeemed(match.id);
 
-        // Confetti celebration
         try {
           confetti({
             particleCount: 80,
@@ -58,24 +56,24 @@ export const RedeemPage: React.FC<RedeemPageProps> = ({
             origin: { y: 0.6 },
             colors: ['#f59e0b', '#10b981', '#6366f1', '#ec4899', '#ffffff'],
           });
-        } catch (e) {
-          // ignore if canvas not ready
-        }
+        } catch (e) {}
       } else {
         setVerifiedRecord(null);
         setErrorMessage(
           `No donation record found for "${query}". Please verify exact spelling or register first.`
         );
       }
+    } catch (err) {
+      setErrorMessage('Failed to search records. Please check your connection.');
+    } finally {
       setIsVerifying(false);
-    }, 350);
+    }
   };
 
   const handleDownload = async () => {
     if (!verifiedRecord) return;
     setIsDownloading(true);
     try {
-      // Confetti burst on download
       try {
         confetti({
           particleCount: 120,
@@ -106,9 +104,7 @@ export const RedeemPage: React.FC<RedeemPageProps> = ({
         <SinusoidLogo size="sm" onClick={handleReset} />
       </div>
 
-      {/* Main Content Area */}
       {!verifiedRecord ? (
-        /* SCREENSHOT 2: Enter your full name */
         <div className="w-full max-w-md mx-auto my-auto py-8 z-10 animate-in fade-in duration-200">
           <form
             onSubmit={(e) => {
@@ -117,7 +113,6 @@ export const RedeemPage: React.FC<RedeemPageProps> = ({
             }}
             className="space-y-6 text-center"
           >
-            {/* Input Label (Exact match to Screenshot 2) */}
             <div className="space-y-3">
               <h2 className="text-2xl sm:text-3xl font-semibold text-white tracking-wide">
                 Enter your full name
@@ -133,30 +128,15 @@ export const RedeemPage: React.FC<RedeemPageProps> = ({
               />
             </div>
 
-            {/* Error feedback */}
             {errorMessage && (
               <div className="p-3.5 bg-rose-950/70 border border-rose-500/50 rounded-xl text-rose-200 text-sm flex items-start gap-2.5 text-left">
                 <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
                 <div>
                   <p>{errorMessage}</p>
-                  <p className="mt-1 text-xs text-blue-200">
-                    Tip: Try searching for pre-loaded demo name{' '}
-                    <strong
-                      className="underline cursor-pointer text-amber-300 font-bold"
-                      onClick={() => {
-                        setFullName('Jonathan Patterson');
-                        handleVerify('Jonathan Patterson');
-                      }}
-                    >
-                      "Jonathan Patterson"
-                    </strong>{' '}
-                    or check the spreadsheet.
-                  </p>
                 </div>
               </div>
             )}
 
-            {/* Green ENTER Button (Exact match to Screenshot 2) */}
             <div className="pt-2 flex justify-center">
               <button
                 type="submit"
@@ -173,16 +153,13 @@ export const RedeemPage: React.FC<RedeemPageProps> = ({
           </form>
         </div>
       ) : (
-        /* SCREENSHOT 3: Certificate Preview with Green Download Button */
         <div className="w-full max-w-4xl mx-auto my-auto py-4 z-10 flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
-          {/* Certificate Canvas/Preview */}
           <CertificatePreview
             record={verifiedRecord}
             template={selectedTemplate}
             onTemplateChange={setSelectedTemplate}
           />
 
-          {/* Green Download Button (Exact match to Screenshot 3: CLICK HERE TO DOWNLOAD) */}
           <div className="pt-6 flex flex-col items-center">
             <button
               type="button"
