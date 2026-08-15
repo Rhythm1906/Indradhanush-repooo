@@ -13,14 +13,17 @@ import {
   Download,
   Link2,
   CheckCircle2,
-  AlertCircle,
   RefreshCw,
-  QrCode,
   ExternalLink,
   Copy,
-  Plus,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+
+const GOOGLE_SHEET_URL =
+  'https://docs.google.com/spreadsheets/d/1LPt6INxYD8mVxcXxMdCizM6MzBj24WrPm2mP0gwp6ho/edit?usp=sharing';
+
+const DEFAULT_WEBHOOK_URL =
+  'https://script.google.com/macros/s/AKfycbz-jWttGJ-FJDFFtn1gnrLz_RJBhi_TP7CKsJ5rixbhurtBaGVJzXuS5cypVwGa9pcv/exec';
 
 interface SpreadsheetModalProps {
   isOpen: boolean;
@@ -35,7 +38,13 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
 }) => {
   const [records, setRecords] = useState<DonationRecord[]>([]);
   const [activeTab, setActiveTab] = useState<'records' | 'googlesheet' | 'qrcodes'>('records');
-  const [googleConfig, setGoogleConfig] = useState<GoogleSheetConfig>(getGoogleSheetConfig());
+  const [googleConfig, setGoogleConfig] = useState<GoogleSheetConfig>(() => {
+    const existing = getGoogleSheetConfig();
+    return {
+      webhookUrl: existing.webhookUrl || DEFAULT_WEBHOOK_URL,
+      enabled: existing.enabled ?? true,
+    };
+  });
   const [syncStatusMsg, setSyncStatusMsg] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
@@ -44,7 +53,11 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setRecords(getStoredRecords());
-      setGoogleConfig(getGoogleSheetConfig());
+      const existing = getGoogleSheetConfig();
+      setGoogleConfig({
+        webhookUrl: existing.webhookUrl || DEFAULT_WEBHOOK_URL,
+        enabled: existing.enabled ?? true,
+      });
     }
   }, [isOpen]);
 
@@ -61,32 +74,21 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
 
   const handleExportExcel = () => {
     const dataForSheet = records.map((r) => ({
-      'Certificate ID': r.id,
-      'Full Name': r.name,
-      'Role': r.role,
-      'Enrollment No': r.enrollNo || 'N/A',
-      'What Did They Donate': r.donationItem,
-      'Registration Date': r.dateStr,
-      'Redeemed Status': r.redeemed ? 'Redeemed' : 'Pending',
-      'Redeemed Date': r.redeemedAt || 'N/A',
-      'QR Verification Payload': r.qrPayload,
+      Name: r.name,
+      Role: r.role,
+      'Enrollment No': r.enrollNo || '-',
+      Donation: r.donationItem,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataForSheet);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Donations');
 
-    // Auto fit column width
     worksheet['!cols'] = [
-      { wch: 16 },
-      { wch: 24 },
+      { wch: 25 },
       { wch: 20 },
-      { wch: 18 },
+      { wch: 20 },
       { wch: 30 },
-      { wch: 18 },
-      { wch: 15 },
-      { wch: 18 },
-      { wch: 35 },
     ];
 
     XLSX.writeFile(workbook, `SINUSOID_VX_Donations_${new Date().toISOString().slice(0, 10)}.xlsx`);
@@ -94,13 +96,10 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
 
   const handleExportCSV = () => {
     const dataForSheet = records.map((r) => ({
-      'Certificate ID': r.id,
-      'Full Name': r.name,
-      'Role': r.role,
-      'Enrollment No': r.enrollNo || 'N/A',
-      'What Did They Donate': r.donationItem,
-      'Registration Date': r.dateStr,
-      'Redeemed Status': r.redeemed ? 'Redeemed' : 'Pending',
+      Name: r.name,
+      Role: r.role,
+      'Enrollment No': r.enrollNo || '-',
+      Donation: r.donationItem,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataForSheet);
@@ -121,46 +120,39 @@ export const SpreadsheetModal: React.FC<SpreadsheetModalProps> = ({
 
   const handleTestSyncAll = async () => {
     setIsSyncing(true);
-    setSyncStatusMsg('Pushing all rows to Google Sheet webhook...');
+    setSyncStatusMsg('Syncing records to live Google Sheet...');
     let successCount = 0;
     for (const rec of records) {
       const res = await syncRecordToGoogleSheets(rec);
       if (res.success) successCount++;
     }
     setIsSyncing(false);
-    setSyncStatusMsg(`Successfully sent ${successCount} records to Google Sheet.`);
+    setSyncStatusMsg(`Registration sync completed: ${successCount} records stored in Google Sheet.`);
     setTimeout(() => setSyncStatusMsg(''), 4000);
   };
 
   const googleAppsScriptCode = `// --- GOOGLE APPS SCRIPT FOR SINUSOID VX ---
-// 1. Open your Google Sheet -> Extensions -> Apps Script
-// 2. Paste this code -> Click Deploy -> New Deployment -> Web App
-// 3. Set "Who has access" to "Anyone"
-// 4. Copy the Web App URL and paste it into the Webhook URL field in the app.
-
 function doPost(e) {
   try {
-    var data = JSON.parse(e.postData.contents);
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var raw = e && e.postData && e.postData.contents ? e.postData.contents : "{}";
+    var data = JSON.parse(raw);
     
-    // Create headers if empty
+    var ss = SpreadsheetApp.openById("1LPt6INxYD8mVxcXxMdCizM6MzBj24WrPm2mP0gwp6ho");
+    var sheet = ss.getActiveSheet();
+
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["ID", "Name", "Role", "Enroll No", "Donation Item", "Date", "QR Payload", "Timestamp"]);
-      sheet.getRange("1:1").setFontWeight("bold").setBackground("#1242c7").setFontColor("#ffffff");
+      sheet.appendRow(["Name", "Role", "Enrollment No", "Donation"]);
+      sheet.getRange("1:1").setFontWeight("bold");
     }
-    
+
     sheet.appendRow([
-      data.id || "",
       data.name || "",
       data.role || "",
-      data.enrollNo || "N/A",
-      data.donationItem || "",
-      data.date || new Date().toLocaleDateString(),
-      data.qrPayload || "",
-      data.timestamp || new Date().toISOString()
+      data.enrollNo || "-",
+      data.donationItem || ""
     ]);
-    
-    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Registration Complete!" }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ status: "error", error: err.toString() }))
@@ -182,12 +174,22 @@ function doPost(e) {
                 Google Sheets & Excel Database
               </h2>
               <p className="text-xs text-blue-200">
-                {records.length} registered donators &bull; Live Sheet Synchronization
+                {records.length} registered entries &bull; Direct Google Sheet Sync
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <a
+              href={GOOGLE_SHEET_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm text-white no-underline"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Open Google Sheet</span>
+            </a>
+
             <button
               type="button"
               onClick={handleExportExcel}
@@ -251,7 +253,7 @@ function doPost(e) {
               <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
                 <input
                   type="text"
-                  placeholder="Filter by name, role, donation, or ID..."
+                  placeholder="Filter by name, role, donation, or enrollment no..."
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
                   className="px-4 py-2 rounded-xl bg-[#0e2768] border border-blue-400/30 text-white placeholder-blue-300/50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 w-full sm:w-80"
@@ -280,12 +282,10 @@ function doPost(e) {
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-blue-400/30 bg-[#0a1e56] text-blue-200 text-xs uppercase tracking-wider font-semibold">
-                      <th className="p-3.5">ID</th>
                       <th className="p-3.5">Donator Name</th>
                       <th className="p-3.5">Role</th>
-                      <th className="p-3.5">Enroll No</th>
+                      <th className="p-3.5">Enrollment No</th>
                       <th className="p-3.5">What Did They Donate</th>
-                      <th className="p-3.5">Date</th>
                       <th className="p-3.5">Status</th>
                       <th className="p-3.5 text-right">Actions</th>
                     </tr>
@@ -293,14 +293,13 @@ function doPost(e) {
                   <tbody className="divide-y divide-blue-400/10 text-white/90">
                     {filteredRecords.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="p-8 text-center text-blue-200">
-                          No donation records match your search query.
+                        <td colSpan={6} className="p-8 text-center text-blue-200">
+                          No records match your search query.
                         </td>
                       </tr>
                     ) : (
                       filteredRecords.map((r) => (
                         <tr key={r.id} className="hover:bg-blue-600/20 transition-colors">
-                          <td className="p-3.5 font-mono text-xs text-amber-300 font-semibold">{r.id}</td>
                           <td className="p-3.5 font-bold text-white text-base">{r.name}</td>
                           <td className="p-3.5">{r.role}</td>
                           <td className="p-3.5 font-mono text-xs text-blue-200">{r.enrollNo || '-'}</td>
@@ -309,7 +308,6 @@ function doPost(e) {
                               {r.donationItem}
                             </span>
                           </td>
-                          <td className="p-3.5 text-xs text-blue-200">{r.dateStr}</td>
                           <td className="p-3.5">
                             {r.redeemed ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
@@ -346,12 +344,24 @@ function doPost(e) {
           {activeTab === 'googlesheet' && (
             <div className="max-w-3xl mx-auto space-y-6">
               <div className="bg-[#0b2470] border border-blue-400/30 rounded-2xl p-5 space-y-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Link2 className="w-5 h-5 text-emerald-400" />
-                  <span>Connect Real Google Sheets via Webhook</span>
-                </h3>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Link2 className="w-5 h-5 text-emerald-400" />
+                    <span>Connected Live Google Sheet</span>
+                  </h3>
+                  <a
+                    href={GOOGLE_SHEET_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-emerald-300 hover:text-emerald-200 flex items-center gap-1 underline underline-offset-4"
+                  >
+                    <span>View Connected Sheet (indra)</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
                 <p className="text-sm text-blue-200 leading-relaxed">
-                  Every time a new donation is registered, this app can automatically append a row to your live Google Sheet using a free Google Apps Script Webhook.
+                  Upon submitting the registration form, data will immediately sync with the four columns (Name, Role, Enrollment No, Donation) in your Google Sheet.
                 </p>
 
                 <div className="space-y-3 pt-2">
@@ -364,7 +374,7 @@ function doPost(e) {
                     onChange={(e) =>
                       setGoogleConfig({ ...googleConfig, webhookUrl: e.target.value })
                     }
-                    placeholder="https://script.google.com/macros/s/AKfycbx.../exec"
+                    placeholder="https://script.google.com/macros/s/.../exec"
                     className="w-full px-4 py-2.5 rounded-xl bg-[#081b53] border border-blue-400/40 text-white placeholder-blue-300/40 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
 
@@ -410,11 +420,11 @@ function doPost(e) {
                 )}
               </div>
 
-              {/* Step-by-step Setup Guide */}
+              {/* Quick Copy Box */}
               <div className="bg-[#0b2470] border border-blue-400/30 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-base font-bold text-amber-300">
-                    How to setup Google Sheets in 2 minutes:
+                    Deployed Apps Script Code:
                   </h4>
                   <button
                     type="button"
@@ -429,15 +439,6 @@ function doPost(e) {
                     <span>{copiedScript ? 'Copied Apps Script!' : 'Copy Apps Script'}</span>
                   </button>
                 </div>
-
-                <ol className="list-decimal list-inside text-xs sm:text-sm text-blue-200 space-y-1.5 leading-relaxed">
-                  <li>Create a new spreadsheet at <strong className="text-white">sheets.google.com</strong>.</li>
-                  <li>Click <strong className="text-white">Extensions &gt; Apps Script</strong>.</li>
-                  <li>Paste the script below, replace any default code, and click <strong className="text-white">Save</strong>.</li>
-                  <li>Click <strong className="text-white">Deploy &gt; New Deployment</strong>, select type <strong className="text-white">Web app</strong>.</li>
-                  <li>Set <strong className="text-white">Who has access</strong> to <strong className="text-white">Anyone</strong> and deploy.</li>
-                  <li>Copy the resulting Web App URL and paste it into the field above!</li>
-                </ol>
 
                 <div className="relative">
                   <pre className="bg-[#06143c] p-4 rounded-xl text-[11px] font-mono text-emerald-300/90 overflow-x-auto border border-blue-400/20 max-h-48">
