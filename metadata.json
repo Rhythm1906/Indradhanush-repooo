@@ -1,0 +1,6 @@
+{
+  "name": "SINUSOID VX - Donation & Certificate Portal",
+  "description": "Register donators, record to Google Sheets / Excel, generate QR verification codes, and issue downloadable PDF certificates on redemption.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
