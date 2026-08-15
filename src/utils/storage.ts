@@ -101,20 +101,49 @@ export async function saveRecord(
     qrPayload: `SINUSOID_VERIFY_${id}`,
   };
 
-  // 1. Save locally in browser
   const existing = getStoredRecords();
   saveStoredRecords([newRecord, ...existing]);
 
-  // 2. Push to Google Sheets via SheetDB API
   await syncRecordToGoogleSheets(newRecord);
 
   return newRecord;
 }
 
-export function findRecordByName(name: string): DonationRecord | null {
-  const records = getStoredRecords();
+// Online + Offline Lookup
+export async function findRecordByName(name: string): Promise<DonationRecord | null> {
   const query = name.trim().toLowerCase();
-  return records.find((r) => r.name.trim().toLowerCase() === query) || null;
+  
+  // 1. Check local storage first
+  const localRecords = getStoredRecords();
+  const localMatch = localRecords.find((r) => r.name.trim().toLowerCase() === query);
+  if (localMatch) return localMatch;
+
+  // 2. Fetch live record from SheetDB
+  try {
+    const res = await fetch(`${SHEETDB_API_URL}/search?name=${encodeURIComponent(name.trim())}&casesensitive=false`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const row = data[0];
+        const record: DonationRecord = {
+          id: `SINU-${Math.floor(1000 + Math.random() * 9000)}`,
+          name: row.name || name.trim(),
+          role: row.role || 'Contributor',
+          enrollNo: row['enrollment no'] || row.enrollNo || '-',
+          donationItem: row.donation || row.donationItem || 'Contribution',
+          dateStr: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+          timestamp: new Date().toISOString(),
+          redeemed: false,
+          qrPayload: `SINUSOID_VERIFY_${row.name || name.trim()}`,
+        };
+        return record;
+      }
+    }
+  } catch (err) {
+    console.error('SheetDB lookup error:', err);
+  }
+
+  return null;
 }
 
 export function markRecordRedeemed(id: string): boolean {
