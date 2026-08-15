@@ -161,12 +161,12 @@ function doPost(e) {
 }`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
-      <div className="bg-[#0f2d8a] border-2 border-blue-400/40 rounded-3xl w-full max-w-5xl h-[88vh] flex flex-col text-white shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 select-none animate-in fade-in duration-200">
+      <div className="bg-slate-950/80 backdrop-blur-2xl border border-white/20 rounded-3xl w-full max-w-5xl h-[88vh] flex flex-col text-white shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-blue-400/20 flex items-center justify-between bg-[#0b2470]">
+        <div className="px-6 py-4 border-b border-white/15 flex items-center justify-between bg-white/5 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600/40 border border-blue-400 flex items-center justify-center text-blue-300">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300">
               <FileSpreadsheet className="w-6 h-6" />
             </div>
             <div>
@@ -184,7 +184,7 @@ function doPost(e) {
               href={GOOGLE_SHEET_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm text-white no-underline"
+              className="px-3 py-1.5 bg-blue-600/80 hover:bg-blue-500 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm text-white no-underline border border-blue-400/30"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               <span>Open Google Sheet</span>
@@ -193,7 +193,7 @@ function doPost(e) {
             <button
               type="button"
               onClick={handleExportExcel}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+              className="px-3 py-1.5 bg-emerald-600/80 hover:bg-emerald-500 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm border border-emerald-400/30"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download Excel (.xlsx)</span>
@@ -209,14 +209,14 @@ function doPost(e) {
         </div>
 
         {/* Sub-Nav Tabs */}
-        <div className="px-6 pt-3 border-b border-blue-400/20 bg-[#0e2a80] flex gap-2">
+        <div className="px-6 pt-3 border-b border-white/10 bg-black/30 flex gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('records')}
             className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors ${
               activeTab === 'records'
-                ? 'bg-[#1239aa] text-white border-t-2 border-emerald-400'
-                : 'text-blue-200 hover:text-white'
+                ? 'bg-white/15 text-white border-t-2 border-emerald-400 backdrop-blur-md'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             Donations Table ({records.length})
@@ -226,8 +226,8 @@ function doPost(e) {
             onClick={() => setActiveTab('googlesheet')}
             className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors ${
               activeTab === 'googlesheet'
-                ? 'bg-[#1239aa] text-white border-t-2 border-emerald-400'
-                : 'text-blue-200 hover:text-white'
+                ? 'bg-white/15 text-white border-t-2 border-emerald-400 backdrop-blur-md'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             Google Sheets Live Sync
@@ -237,8 +237,8 @@ function doPost(e) {
             onClick={() => setActiveTab('qrcodes')}
             className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-xl transition-colors ${
               activeTab === 'qrcodes'
-                ? 'bg-[#1239aa] text-white border-t-2 border-emerald-400'
-                : 'text-blue-200 hover:text-white'
+                ? 'bg-white/15 text-white border-t-2 border-emerald-400 backdrop-blur-md'
+                : 'text-slate-300 hover:text-white'
             }`}
           >
             QR Badges & Verification Cards
@@ -246,7 +246,7 @@ function doPost(e) {
         </div>
 
         {/* Tab Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 bg-[#1239aa]/40">
+        <div className="flex-1 overflow-y-auto p-6 bg-black/20">
           {activeTab === 'records' && (
             <div className="space-y-4">
               {/* Search & Export Toolbar */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SinusoidLogo } from './SinusoidLogo';
+import { Navbar } from './Navbar';
 import { saveRecord } from '../utils/storage';
 import { DonationRecord } from '../types';
 import { CheckCircle } from 'lucide-react';
@@ -64,95 +64,99 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#1242c7] text-white flex flex-col justify-between p-4 sm:p-8 select-none relative overflow-hidden">
-      {/* Top Bar with SINUSOID VX Logo */}
-      <div className="w-full max-w-7xl mx-auto flex items-center justify-between z-10">
-        <SinusoidLogo size="md" />
-      </div>
+    <div className="w-full min-h-screen flex flex-col justify-between p-4 sm:p-8 select-none relative z-10">
+      {/* Top Navbar with SINUSOID VX & Indradhanush Logos */}
+      <Navbar className="mb-4 sm:mb-0" />
 
-      {/* Main Registration Box */}
-      <div className="w-full max-w-lg mx-auto my-auto py-8 z-10">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name Field */}
-          <div className="space-y-1.5">
-            <label className="block text-white font-semibold text-lg sm:text-xl tracking-wide">
-              Name
-            </label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Jonathan Patterson"
-              className="w-full h-13 px-4 rounded-xl bg-[#3559bf] border-2 border-black/40 text-white placeholder-blue-200/50 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all shadow-inner"
-            />
-          </div>
+      {/* Main Registration Box wrapped in Transparent Glass Div with Blackish Shade */}
+      <div className="w-full max-w-lg mx-auto my-auto py-6 z-10">
+        <div className="relative rounded-3xl bg-black/60 backdrop-blur-2xl border border-white/15 p-6 sm:p-9 shadow-2xl shadow-black/70 overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none">
+          {/* Subtle colorful ambient blur shades for depth */}
+          <div className="absolute -top-16 -left-16 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -bottom-16 -right-16 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-          {/* Role Field */}
-          <div className="space-y-1.5">
-            <label className="block text-white font-semibold text-lg sm:text-xl tracking-wide">
-              Role
-            </label>
-            <input
-              type="text"
-              required
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="e.g. Contributor, Volunteer, Sponsor"
-              className="w-full h-13 px-4 rounded-xl bg-[#3559bf] border-2 border-black/40 text-white placeholder-blue-200/50 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all shadow-inner"
-            />
-          </div>
-
-          {/* Enroll No (Optional) Field */}
-          <div className="space-y-1.5">
-            <label className="block text-white font-semibold text-lg sm:text-xl tracking-wide">
-              Enroll No (Optional)
-            </label>
-            <input
-              type="text"
-              value={enrollNo}
-              onChange={(e) => setEnrollNo(e.target.value)}
-              placeholder="e.g. 2026-ENG-8849"
-              className="w-full h-13 px-4 rounded-xl bg-[#3559bf] border-2 border-black/40 text-white placeholder-blue-200/50 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all shadow-inner"
-            />
-          </div>
-
-          {/* What did they donate */}
-          <div className="space-y-1.5">
-            <label className="block text-white font-semibold text-lg sm:text-xl tracking-wide">
-              What did they donate
-            </label>
-            <input
-              type="text"
-              required
-              value={donationItem}
-              onChange={(e) => setDonationItem(e.target.value)}
-              placeholder="e.g. Tech Hardware, Books, Funds, Equipment"
-              className="w-full h-13 px-4 rounded-xl bg-[#3559bf] border-2 border-black/40 text-white placeholder-blue-200/50 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all shadow-inner"
-            />
-          </div>
-
-          {errorMessage && (
-            <div className="p-3 bg-rose-900/60 border border-rose-500/50 rounded-xl text-rose-200 text-sm">
-              {errorMessage}
+          <form onSubmit={handleSubmit} className="relative z-10 space-y-5">
+            {/* Name Field */}
+            <div className="space-y-1.5">
+              <label className="block text-white font-semibold text-lg sm:text-xl tracking-wide drop-shadow-md">
+                Name
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Jonathan Patterson"
+                className="w-full h-13 px-4 rounded-xl bg-black/50 hover:bg-black/60 focus:bg-black/70 border border-white/20 focus:border-emerald-400 text-white placeholder-white/40 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400/60 transition-all shadow-inner backdrop-blur-md"
+              />
             </div>
-          )}
 
-          {/* Green ENTER Button */}
-          <div className="pt-2 flex justify-center">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full sm:w-64 h-12 rounded-full bg-[#3eb370] hover:bg-[#34a362] active:bg-[#2c8e54] text-white font-bold text-lg tracking-wider uppercase transition-all shadow-lg hover:shadow-emerald-900/30 transform active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {isLoading ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                'ENTER'
-              )}
-            </button>
-          </div>
-        </form>
+            {/* Role Field */}
+            <div className="space-y-1.5">
+              <label className="block text-white font-semibold text-lg sm:text-xl tracking-wide drop-shadow-md">
+                Role
+              </label>
+              <input
+                type="text"
+                required
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                placeholder="e.g. Contributor, Volunteer, Sponsor"
+                className="w-full h-13 px-4 rounded-xl bg-black/50 hover:bg-black/60 focus:bg-black/70 border border-white/20 focus:border-emerald-400 text-white placeholder-white/40 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400/60 transition-all shadow-inner backdrop-blur-md"
+              />
+            </div>
+
+            {/* Enroll No (Optional) Field */}
+            <div className="space-y-1.5">
+              <label className="block text-white font-semibold text-lg sm:text-xl tracking-wide drop-shadow-md">
+                Enroll No (Optional)
+              </label>
+              <input
+                type="text"
+                value={enrollNo}
+                onChange={(e) => setEnrollNo(e.target.value)}
+                placeholder="e.g. 2026-ENG-8849"
+                className="w-full h-13 px-4 rounded-xl bg-black/50 hover:bg-black/60 focus:bg-black/70 border border-white/20 focus:border-emerald-400 text-white placeholder-white/40 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400/60 transition-all shadow-inner backdrop-blur-md"
+              />
+            </div>
+
+            {/* What did they donate */}
+            <div className="space-y-1.5">
+              <label className="block text-white font-semibold text-lg sm:text-xl tracking-wide drop-shadow-md">
+                What did they donate
+              </label>
+              <input
+                type="text"
+                required
+                value={donationItem}
+                onChange={(e) => setDonationItem(e.target.value)}
+                placeholder="e.g. Tech Hardware, Books, Funds, Equipment"
+                className="w-full h-13 px-4 rounded-xl bg-black/50 hover:bg-black/60 focus:bg-black/70 border border-white/20 focus:border-emerald-400 text-white placeholder-white/40 text-lg focus:outline-none focus:ring-2 focus:ring-emerald-400/60 transition-all shadow-inner backdrop-blur-md"
+              />
+            </div>
+
+            {errorMessage && (
+              <div className="p-3 bg-rose-950/80 border border-rose-500/50 rounded-xl text-rose-200 text-sm backdrop-blur-md">
+                {errorMessage}
+              </div>
+            )}
+
+            {/* Green ENTER Button */}
+            <div className="pt-2 flex justify-center">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full sm:w-64 h-12 rounded-full bg-[#3eb370] hover:bg-[#34a362] active:bg-[#2c8e54] text-white font-bold text-lg tracking-wider uppercase transition-all shadow-lg hover:shadow-emerald-500/30 transform active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  'ENTER'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
       {/* Success Registration Modal */}

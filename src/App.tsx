@@ -34,6 +34,10 @@ export default function App() {
         }
       } else {
         setRoute('register');
+        // Ensure URL shows /registration if on main root page
+        if (!hash || hash === '#' || hash === '#/' || hash === '#/register') {
+          window.location.hash = '#/registration';
+        }
       }
     };
 
@@ -59,24 +63,27 @@ export default function App() {
   };
 
   const navigateToRegister = () => {
-    window.location.hash = '#/register';
+    window.location.hash = '#/registration';
     setRoute('register');
   };
 
   return (
-    <div className="min-h-screen bg-[#1242c7]">
-      {route === 'register' ? (
-        <RegisterPage
-          onNavigateToRedeem={navigateToRedeem}
-          onOpenSpreadsheet={() => setIsSpreadsheetOpen(true)}
-        />
-      ) : (
-        <RedeemPage
-          initialNameQuery={prefilledRedeemName}
-          onNavigateToRegister={navigateToRegister}
-          onOpenSpreadsheet={() => setIsSpreadsheetOpen(true)}
-        />
-      )}
+    <div className="min-h-screen bg-[url('/assets/background.jpg')] bg-cover bg-center bg-no-repeat bg-fixed relative selection:bg-white/30 text-white overflow-x-hidden">
+      {/* Ambient background overlay for smooth readability & glass reflection */}
+      <div className="min-h-screen bg-black/20 backdrop-brightness-95 flex flex-col justify-between">
+        {route === 'register' ? (
+          <RegisterPage
+            onNavigateToRedeem={navigateToRedeem}
+            onOpenSpreadsheet={() => setIsSpreadsheetOpen(true)}
+          />
+        ) : (
+          <RedeemPage
+            initialNameQuery={prefilledRedeemName}
+            onNavigateToRegister={navigateToRegister}
+            onOpenSpreadsheet={() => setIsSpreadsheetOpen(true)}
+          />
+        )}
+      </div>
 
       {/* Google Sheets & Excel Manager Modal */}
       <SpreadsheetModal
